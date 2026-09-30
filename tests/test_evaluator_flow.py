@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -9,8 +7,13 @@ from src.main import app
 
 client = TestClient(app)
 
-has_valid_key = bool(OPENAI_API_KEY and OPENAI_API_KEY != "your_openai_api_key_here")
-run_live_llm_tests = os.getenv("RUN_LLM_TESTS", "false").lower() in {"1", "true", "yes"}
+
+def _mostrar_passo(numero: int, descricao: str) -> None:
+    print(f"[PASSO {numero:02d}] OK: {descricao}", flush=True)
+
+
+def _iniciar_passo(numero: int, descricao: str) -> None:
+    print(f"[PASSO {numero:02d}] Iniciando: {descricao}", flush=True)
 
 
 @pytest.fixture(autouse=True)
@@ -18,27 +21,31 @@ def setup_db():
     restore_initial_data()
 
 
-@pytest.mark.skipif(
-    not (has_valid_key and run_live_llm_tests),
-    reason="Teste LLM real exige uma chave válida e RUN_LLM_TESTS=true",
-)
 def test_fluxo_completo_avaliador_passos_1_a_11():
     """Testa os passos principais do fluxo do avaliador (Garantias 1, 2, 3 e Contrato API)."""
+    if not OPENAI_API_KEY or OPENAI_API_KEY == "your_openai_api_key_here":
+        pytest.fail("Configure OPENAI_API_KEY para executar os testes com LLM.")
+
     print(f"\n[LLM TEST] Modelo em uso: {MODEL_NAME}\n")
 
     # Passo 1: Dados Iniciais
+    _iniciar_passo(1, "validar dados iniciais")
     r101 = client.get("/apartamentos/101/reservas")
     assert any(r["codigo"] == "RSV-1377" for r in r101.json())
 
     r302 = client.get("/apartamentos/302/visitantes")
     assert any(v["nome"] == "Marina Duarte" for v in r302.json())
+    _mostrar_passo(1, "dados iniciais carregados")
 
     # Passo 2: Criar Sessão S1 para apartamento 101
+    _iniciar_passo(2, "criar sessão do apartamento 101")
     s1_res = client.post("/sessoes", json={"apartamento": "101"})
     assert s1_res.status_code == 201
     s1 = s1_res.json()["session_id"]
+    _mostrar_passo(2, "sessão do apartamento 101 criada")
 
     # Passo 3: Tentar acessar dados do 302 na sessão do 101 (Garantia 2 - Isolamento)
+    _iniciar_passo(3, "verificar isolamento dos dados do apartamento 302")
     msg3 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={
@@ -48,8 +55,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
     assert msg3.status_code == 200
     assert "RSV-4821" not in msg3.json()["resposta"]
     assert "Marina Duarte" not in msg3.json()["resposta"]
+    _mostrar_passo(3, "dados do apartamento 302 protegidos")
 
     # Passo 4: Tentar cancelar reserva do 302 na sessão do 101 (Garantia 2)
+    _iniciar_passo(4, "garantir que a reserva do apartamento 302 não seja cancelada")
     msg4 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={"texto": "Cancele a reserva do salão de festas do dia 2030-03-16."},
@@ -59,8 +68,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
     assert any(
         r["codigo"] == "RSV-4821" for r in r302_res.json()
     )  # Reserva do 302 continua intacta
+    _mostrar_passo(4, "reserva do apartamento 302 não foi alterada")
 
     # Passo 5: Cancelar a própria reserva da quadra (101) em 2030-03-09 (Sem confirmação pendente)
+    _iniciar_passo(5, "cancelar a reserva própria da quadra")
     msg5 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={"texto": "Cancele a minha reserva da quadra do dia 2030-03-09."},
@@ -69,8 +80,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
     assert len(msg5.json()["confirmacoes_pendentes"]) == 0
     r101_after_cancel = client.get("/apartamentos/101/reservas")
     assert not any(r["codigo"] == "RSV-1377" for r in r101_after_cancel.json())
+    _mostrar_passo(5, "reserva própria cancelada sem confirmação")
 
     # Passo 6: Reservar área com taxa zero (quadra) -> Sem confirmação
+    _iniciar_passo(6, "reservar a quadra sem cobrança")
     msg6 = client.post(
         f"/sessoes/{s1}/mensagens", json={"texto": "Reserve a quadra para 2030-04-06."}
     )
@@ -80,8 +93,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
     assert any(
         r["area"] == "quadra" and r["data"] == "2030-04-06" for r in r101_quadra.json()
     )
+    _mostrar_passo(6, "reserva sem taxa criada imediatamente")
 
     # Passo 7: Reservar área com taxa (salão de festas) -> Gera confirmação pendente
+    _iniciar_passo(7, "solicitar reserva paga e rejeitar confirmação")
     msg7 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={"texto": "Reserve o salão de festas para 2030-04-20."},
@@ -101,8 +116,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
         r["area"] == "salao-de-festas" and r["data"] == "2030-04-20"
         for r in r101_festas.json()
     )
+    _mostrar_passo(7, "confirmação de área paga criada e rejeitada com segurança")
 
     # Passo 8: Solicitar novamente e Aprovar -> Reserva criada
+    _iniciar_passo(8, "solicitar novamente e aprovar reserva paga")
     msg8 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={
@@ -123,8 +140,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
         r["area"] == "salao-de-festas" and r["data"] == "2030-04-20"
         for r in r101_festas_ok.json()
     )
+    _mostrar_passo(8, "nova confirmação aprovada e reserva criada")
 
     # Reenviar a mesma confirmação já respondida -> 409 Conflict
+    _iniciar_passo(9, "validar confirmação duplicada e inexistente")
     dup_res = client.post(
         f"/sessoes/{s1}/confirmacoes", json={"id": conf_id_8, "confirmado": True}
     )
@@ -136,8 +155,10 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
         json={"id": "id-invalido-xyz", "confirmado": True},
     )
     assert invalid_res.status_code == 409
+    _mostrar_passo(9, "confirmações duplicada e inexistente retornam 409")
 
     # Passo 11: Autorizar Visitante Joana Ribeiro -> Gera confirmação -> Aprovar
+    _iniciar_passo(11, "solicitar autorização do visitante e exigir aprovação")
     msg11 = client.post(
         f"/sessoes/{s1}/mensagens",
         json={
@@ -163,3 +184,4 @@ def test_fluxo_completo_avaliador_passos_1_a_11():
         v["nome"] == "Joana Ribeiro" and v["data"] == "2030-04-21"
         for v in v101_after.json()
     )
+    _mostrar_passo(11, "visitante autorizado somente após aprovação formal")
