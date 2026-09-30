@@ -1,6 +1,6 @@
 # Regra é regra: Assistente Virtual do Residencial Aurora
 
-API de atendimento e assistente virtual para os moradores do Residencial Aurora construída com **Google ADK (Agent Development Kit v2.2.0)** e **FastAPI** em Python 3.12.
+API de atendimento e assistente virtual para os moradores do Residencial Aurora construída com **Google ADK**, **FastAPI** e o **SDK oficial da OpenAI para Python** em Python 3.12. O modelo pode ser servido por qualquer endpoint compatível com a API OpenAI, incluindo o servidor local configurado no projeto.
 
 ## Arquitetura
 
@@ -63,13 +63,16 @@ O sistema é dividido entre um **Agente Principal (Coordenador)** e três **Espe
    ```bash
    cp .env.example .env
    ```
-2. Abra o arquivo `.env` e insira sua chave do Google AI Studio:
+2. Configure as variáveis do SDK OpenAI:
    ```env
-   GEMINI_API_KEY=sua_chave_aqui
-   MODEL_NAME=gemini-3.8-flash
+   OPENAI_API_KEY=sua_chave_ou_token_do_servidor_local
+   OPENAI_BASE_URL=http://localhost:20128/v1
+   MODEL_NAME=freecoding
    PORT=8000
    DATABASE_PATH=aurora.db
    ```
+
+`OPENAI_API_KEY` é obrigatória para executar os testes com LLM. Para um servidor local OpenAI-compatible, use o endereço configurado pelo servidor e o identificador de modelo anunciado por ele. Não compartilhe nem versione o arquivo `.env`; use `.env.example` como modelo sem credenciais reais.
 
 ### Instalação das Dependências
 Instale os pacotes com o `uv`:
@@ -90,8 +93,35 @@ uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 A API responderá na URL: `http://localhost:8000`.
 
-### Rodar os Testes
-Para executar os testes automatizados de API e concorrência:
+### Testes
+O comando padrão executa todos os testes, inclusive o fluxo avaliador que faz chamadas reais à LLM. Portanto, o servidor configurado em `OPENAI_BASE_URL` precisa estar acessível e `OPENAI_API_KEY` precisa estar definida. O teste LLM não é ignorado por padrão e não depende de `RUN_LLM_TESTS`.
+
+Execute a suíte listando cada teste:
 ```bash
-uv run pytest
+uv run pytest -v
+```
+
+Para exibir também os marcadores de início e conclusão de cada passo do fluxo LLM, use `-s`:
+```bash
+uv run pytest tests/test_evaluator_flow.py -v -s
+```
+
+Opções úteis:
+
+| Opção | Efeito |
+| --- | --- |
+| `-v` | Lista cada teste individualmente e seu resultado. |
+| `-s` | Exibe os `print`s do teste em tempo real, incluindo modelo e passos `[PASSO NN]`. |
+| `-q` | Saída resumida; não use junto com `-v` quando quiser ver cada teste. |
+| `-k texto` | Executa testes cujo nome corresponda ao texto. |
+
+Exemplos para executar apenas um grupo ou localizar um teste:
+```bash
+uv run pytest tests/test_api.py -v
+uv run pytest -k concurrency -v
+```
+
+O fluxo avaliador imprime `[PASSO NN] Iniciando` antes das ações e `[PASSO NN] OK` depois das verificações. Se uma asserção falhar, o último marcador indica o passo que estava em execução. Para conferir a configuração Ruff:
+```bash
+uv run ruff check .
 ```
