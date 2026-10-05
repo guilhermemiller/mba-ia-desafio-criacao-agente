@@ -1,15 +1,24 @@
+from pathlib import Path
 from typing import Any
 
 from google.adk.events import Event
 from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import DatabaseSessionService
 from google.genai.types import Content, Part
 
 from src.agents.main_agent import main_agent
+from src.config import DATABASE_PATH
 from src.storage.repository import Repository
 
-# Global session service for ADK runtime
-session_service = InMemorySessionService()
+
+def _session_database_url() -> str:
+    if DATABASE_PATH == ":memory:":
+        return "sqlite+aiosqlite:///:memory:"
+    database_path = Path(DATABASE_PATH).expanduser().resolve()
+    return f"sqlite+aiosqlite:///{database_path.as_posix()}"
+
+
+session_service = DatabaseSessionService(db_url=_session_database_url())
 
 
 class ADKRunnerWrapper:
