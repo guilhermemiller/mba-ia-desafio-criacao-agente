@@ -110,31 +110,9 @@ class ADKRunnerWrapper:
                 session_id=session_id, new_message=user_content, user_id="user"
             )
             async for event in events:
-                # Store event details
-                event_dict = {
-                    "type": getattr(event, "type", "event"),
-                    "author": getattr(event, "author", None),
-                }
-                if hasattr(event, "content") and event.content:
-                    if hasattr(event.content, "parts"):
-                        parts_text = []
-                        for p in event.content.parts:
-                            if hasattr(p, "text") and p.text:
-                                parts_text.append(p.text)
-                            elif hasattr(p, "function_call") and p.function_call:
-                                parts_text.append(f"call: {p.function_call.name}")
-                            elif (
-                                hasattr(p, "function_response") and p.function_response
-                            ):
-                                parts_text.append(
-                                    f"response: {p.function_response.name}"
-                                )
-                        event_dict["content"] = " ".join(parts_text)
-                    else:
-                        event_dict["content"] = str(event.content)
-                else:
-                    event_dict["content"] = str(event)
-
+                # Persistir o evento completo do ADK para preservar todas as informações
+                # de chamada e resposta das ferramentas (argumentos, retornos, headers, etc.)
+                event_dict = event.model_dump()
                 Repository.adicionar_evento(session_id, event_dict["type"], event_dict)
 
                 # Check for model text response
