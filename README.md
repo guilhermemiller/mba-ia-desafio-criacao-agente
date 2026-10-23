@@ -1,6 +1,6 @@
 # Regra é regra: Assistente Virtual do Residencial Aurora
 
-API de atendimento e assistente virtual para os moradores do Residencial Aurora construída com **Google ADK**, **FastAPI** e o **SDK oficial da OpenAI para Python** em Python 3.12. O modelo pode ser servido por qualquer endpoint compatível com a API OpenAI, incluindo o servidor local configurado no projeto.
+API de atendimento e assistente virtual para os moradores do Residencial Aurora construída com **Google ADK**, **FastAPI** e **Google Gemini** em Python 3.12.
 
 ## Arquitetura
 
@@ -63,16 +63,15 @@ O sistema é dividido entre um **Agente Principal (Coordenador)** e três **Espe
    ```bash
    cp .env.example .env
    ```
-2. Configure as variáveis do SDK OpenAI:
+2. Configure as variáveis do Google AI Studio:
    ```env
-   OPENAI_API_KEY=sua_chave_ou_token_do_servidor_local
-   OPENAI_BASE_URL=http://localhost:20128/v1
-   MODEL_NAME=freecoding
+   GEMINI_API_KEY=sua_chave_do_google_ai_studio
+   MODEL_NAME=gemini-2.5-flash
    PORT=8000
    DATABASE_PATH=aurora.db
    ```
 
-`OPENAI_API_KEY` é obrigatória para executar os testes com LLM. Para um servidor local OpenAI-compatible, use o endereço configurado pelo servidor e o identificador de modelo anunciado por ele. Não compartilhe nem versione o arquivo `.env`; use `.env.example` como modelo sem credenciais reais.
+`GEMINI_API_KEY` é obrigatória para executar o sistema. Você pode obter a chave em https://makersuite.google.com/app/apikey. Não compartilhe nem versione o arquivo `.env`; use `.env.example` como modelo sem credenciais reais.
 
 ### Instalação das Dependências
 Instale os pacotes com o `uv`:

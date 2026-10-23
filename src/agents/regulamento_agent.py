@@ -1,11 +1,11 @@
 from google.adk.agents import Agent
 
-from src.openai_model import openai_model
+from src.gemini_model import gemini_model
 from src.tools.regulamento_tools import buscar_regulamento
 
 regulamento_agent = Agent(
     name="especialista_regulamento",
-    model=openai_model,
+    model=gemini_model,
     instruction="""Você é o especialista no Regulamento Interno do Residencial Aurora.
 Você responde às dúvidas dos moradores consultando obrigatoriamente a ferramenta `buscar_regulamento`.
 

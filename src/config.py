@@ -7,28 +7,19 @@ load_dotenv()
 
 
 def normalize_model_name(raw_name: str) -> str:
-    value = (raw_name or "freecoding").strip()
+    value = (raw_name or "gemini-2.5-flash").strip()
     if not value:
-        return "freecoding"
+        return "gemini-2.5-flash"
 
     if "/" in value or ":" in value or "." in value:
         return value.lower()
 
     normalized = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
-    return normalized or "freecoding"
+    return normalized or "gemini-2.5-flash"
 
 
-# OpenAI-compatible local server support (e.g. LM Studio / local API proxy)
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_BASE_URL = os.getenv(
-    "OPENAI_BASE_URL", os.getenv("OPENAI_API_BASE", "http://localhost:20128/v1")
-)
-if OPENAI_API_KEY:
-    os.environ.setdefault("OPENAI_API_KEY", OPENAI_API_KEY)
-if OPENAI_BASE_URL:
-    os.environ.setdefault("OPENAI_BASE_URL", OPENAI_BASE_URL)
-    os.environ.setdefault("OPENAI_API_BASE", OPENAI_BASE_URL)
-
+# Google AI Studio configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 DATABASE_PATH = os.getenv("DATABASE_PATH", "aurora.db")
 PORT = int(os.getenv("PORT", "8000"))
-MODEL_NAME = normalize_model_name(os.getenv("MODEL_NAME", "freecoding"))
+MODEL_NAME = normalize_model_name(os.getenv("MODEL_NAME", "gemini-2.5-flash"))

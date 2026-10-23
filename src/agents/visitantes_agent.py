@@ -1,6 +1,6 @@
 from google.adk.agents import Agent
 
-from src.openai_model import openai_model
+from src.gemini_model import gemini_model
 from src.tools.visitantes_tools import (
     consultar_meus_visitantes,
     solicitar_autorizacao_visitante,
@@ -8,7 +8,7 @@ from src.tools.visitantes_tools import (
 
 visitantes_agent = Agent(
     name="especialista_visitantes",
-    model=openai_model,
+    model=gemini_model,
     instruction="""Você é o especialista em controle de visitantes do Residencial Aurora.
 Você deve executar imediatamente as ferramentas disponíveis de acordo com o pedido do morador:
 

@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.config import MODEL_NAME, OPENAI_API_KEY
+from src.config import GEMINI_API_KEY, MODEL_NAME
 from src.db import restore_initial_data
 from src.main import app
 
@@ -23,8 +23,8 @@ def setup_db():
 
 def test_fluxo_completo_avaliador_passos_1_a_11():
     """Testa os passos principais do fluxo do avaliador (Garantias 1, 2, 3 e Contrato API)."""
-    if not OPENAI_API_KEY or OPENAI_API_KEY == "your_openai_api_key_here":
-        pytest.fail("Configure OPENAI_API_KEY para executar os testes com LLM.")
+    if not GEMINI_API_KEY or GEMINI_API_KEY == "sua_chave_do_google_ai_studio_aqui":
+        pytest.fail("Configure GEMINI_API_KEY para executar os testes com LLM.")
 
     print(f"\n[LLM TEST] Modelo em uso: {MODEL_NAME}\n")
 

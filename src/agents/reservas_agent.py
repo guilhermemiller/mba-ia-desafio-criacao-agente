@@ -1,6 +1,6 @@
 from google.adk.agents import Agent
 
-from src.openai_model import openai_model
+from src.gemini_model import gemini_model
 from src.tools.reservas_tools import (
     cancelar_reserva_area,
     checar_disponibilidade_area,
@@ -10,7 +10,7 @@ from src.tools.reservas_tools import (
 
 reservas_agent = Agent(
     name="especialista_reservas",
-    model=openai_model,
+    model=gemini_model,
     instruction="""Você é o especialista em reservas de áreas comuns do Residencial Aurora.
 Você deve executar imediatamente as ferramentas disponíveis de acordo com o pedido do morador:
 

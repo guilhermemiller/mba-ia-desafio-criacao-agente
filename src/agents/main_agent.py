@@ -1,9 +1,9 @@
 from google.adk.agents import Agent
 
+from src.gemini_model import gemini_model
 from src.agents.regulamento_agent import regulamento_agent
 from src.agents.reservas_agent import reservas_agent
 from src.agents.visitantes_agent import visitantes_agent
-from src.openai_model import openai_model
 from src.tools.regulamento_tools import buscar_regulamento
 from src.tools.reservas_tools import (
     cancelar_reserva_area,
@@ -18,7 +18,7 @@ from src.tools.visitantes_tools import (
 
 main_agent = Agent(
     name="assistente_principal",
-    model=openai_model,
+    model=gemini_model,
     instruction="""Você é o assistente virtual do Residencial Aurora.
 Sua função é atender os moradores com cortesia e executar as solicitações utilizando os especialistas e ferramentas apropriados:
 
