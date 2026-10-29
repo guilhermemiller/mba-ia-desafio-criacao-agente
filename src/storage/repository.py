@@ -144,7 +144,6 @@ class Repository:
     def criar_reserva(apartamento: str, area: str, data: str) -> Dict[str, Any]:
         """Garantia 5: atomic transaction enforcing UNIQUE(area, data)."""
         conn = get_db_connection()
-        codigo = f"RSV-{uuid.uuid4().hex[:4].upper()}"
         try:
             with conn:
                 conn.execute("BEGIN IMMEDIATE;")
@@ -152,6 +151,11 @@ class Repository:
                 cursor.execute("SELECT 1 FROM reservas WHERE area = ? AND data = ?", (area, data))
                 if cursor.fetchone() is not None:
                     raise ValueError(f"A área '{area}' já está reservada para a data {data}.")
+                # Sob o lock de escrita, sorteia até achar um código ainda não usado.
+                while True:
+                    codigo = f"RSV-{uuid.uuid4().hex[:4].upper()}"
+                    if cursor.execute("SELECT 1 FROM reservas WHERE codigo = ?", (codigo,)).fetchone() is None:
+                        break
                 conn.execute(
                     "INSERT INTO reservas (codigo, apartamento, area, data) VALUES (?, ?, ?, ?)",
                     (codigo, apartamento, area, data)

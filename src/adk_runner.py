@@ -112,8 +112,8 @@ class ADKRunnerWrapper:
             async for event in events:
                 # Persistir o evento completo do ADK para preservar todas as informações
                 # de chamada e resposta das ferramentas (argumentos, retornos, headers, etc.)
-                event_dict = event.model_dump()
-                Repository.adicionar_evento(session_id, event_dict["type"], event_dict)
+                event_dict = event.model_dump(mode="json")
+                Repository.adicionar_evento(session_id, getattr(event, "type", "event"), event_dict)
 
                 # Check for model text response
                 if (

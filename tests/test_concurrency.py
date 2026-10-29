@@ -36,3 +36,19 @@ def test_concurrency_atomic_reservation():
 
     total_bookings = [r for r in res_101 + res_201 if r["area"] == area and r["data"] == data]
     assert len(total_bookings) == 1
+
+
+def test_codigo_de_reserva_repetido_e_sorteado_de_novo(monkeypatch):
+    from types import SimpleNamespace
+
+    import src.storage.repository as repo
+
+    # A segunda reserva sorteia RSV-AAAA (já usado) e deve tentar de novo até RSV-BBBB.
+    sequencia = iter(["aaaa" + "0" * 28, "aaaa" + "1" * 28, "bbbb" + "0" * 28])
+    monkeypatch.setattr(repo.uuid, "uuid4", lambda: SimpleNamespace(hex=next(sequencia)))
+
+    r1 = Repository.criar_reserva("101", "salao-de-festas", "2030-08-01")
+    r2 = Repository.criar_reserva("201", "salao-de-festas", "2030-08-02")
+
+    assert r1["sucesso"] and r1["codigo"] == "RSV-AAAA"
+    assert r2["sucesso"] and r2["codigo"] == "RSV-BBBB"

@@ -66,7 +66,7 @@ O sistema é dividido entre um **Agente Principal (Coordenador)** e três **Espe
 2. Configure as variáveis do Google AI Studio:
    ```env
    GEMINI_API_KEY=sua_chave_do_google_ai_studio
-   MODEL_NAME=gemini-2.5-flash
+   MODEL_NAME=gemini-3.8-flash
    PORT=8000
    DATABASE_PATH=aurora.db
    ```
@@ -93,7 +93,7 @@ uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 A API responderá na URL: `http://localhost:8000`.
 
 ### Testes
-O comando padrão executa todos os testes, inclusive o fluxo avaliador que faz chamadas reais à LLM. Portanto, o servidor configurado em `OPENAI_BASE_URL` precisa estar acessível e `OPENAI_API_KEY` precisa estar definida. O teste LLM não é ignorado por padrão e não depende de `RUN_LLM_TESTS`.
+O comando padrão executa todos os testes, inclusive o fluxo avaliador que faz chamadas reais à LLM. Portanto, o servidor configurado e precisa estar acessível e `GEMINI_API_KEY` precisa estar definida. O teste LLM não é ignorado por padrão e não depende de `RUN_LLM_TESTS`.
 
 Execute a suíte listando cada teste:
 ```bash

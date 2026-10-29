@@ -159,55 +159,20 @@ class GeminiChatModel(BaseLlm):
         Yields:
             LlmResponse: Responses from the Gemini model.
         """
-        request = {
-            "model": self.model,
-            "contents": self._build_messages(llm_request),
-            "temperature": 0,
-        }
-
-        tools = self._build_tools(llm_request)
-        if tools:
-            request["tools"] = tools
-
-        config = llm_request.config
-        generation_options = {
-            "temperature": "temperature",
-            "max_output_tokens": "max_completion_tokens",
-            "top_p": "top_p",
-            "stop_sequences": "stop_sequences",
-            "top_k": "top_k",
-        }
-        for source, target in generation_options.items():
-            value = getattr(config, source, None)
-            if value is not None:
-                request[target] = value
+        config = llm_request.config.model_copy() if llm_request.config else None
+        if config is not None:
+            if config.temperature is None:
+                config.temperature = 0
+            # AI Studio (Gemini Developer API) não aceita labels.
+            config.labels = None
 
         try:
-            response = await self._get_client().models.generate_content_async(**request)
-            if not response.text:
-                raise RuntimeError("The Gemini API returned a response without text.")
-
-            # Convert Gemini response to ADK-compatible format
-            response_parts: list[types.Part] = []
-            if response.text:
-                response_parts.append(types.Part.from_text(text=response.text))
-
-            for tool_call in response.candidates[0].content.role_tool_call if response.candidates else []:
-                arguments = tool_call.args
-                if not isinstance(arguments, dict):
-                    arguments = {}
-                part = types.Part.from_function_call(
-                    name=tool_call.name,
-                    args=arguments,
-                )
-                if part.function_call:
-                    object.__setattr__(part.function_call, "id", tool_call.id)
-                response_parts.append(part)
-
-            yield LlmResponse(
-                content=types.Content(role="model", parts=response_parts),
-                model_version=self.model,
+            response = await self._get_client().aio.models.generate_content(
+                model=self.model,
+                contents=llm_request.contents,
+                config=config,
             )
+            yield LlmResponse.create(response)
         except Exception as e:
             raise RuntimeError(f"Gemini API call failed: {e}")
 
